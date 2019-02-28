@@ -1018,6 +1018,23 @@ class Expr(Basic, EvalfMixin):
 
         """
 
+        from .numbers import Number, NumberSymbol
+
+        if order is None and self.is_Add:
+            # Spot the special case of Add(Number, Mul(Number, expr)) with the
+            # first number positive and thhe second number nagative
+            key = lambda x:not isinstance(x, (Number, NumberSymbol))
+            add_args = sorted(Add.make_args(self), key=key)
+            if (len(add_args) == 2
+                and isinstance(add_args[0], (Number, NumberSymbol))
+                and isinstance(add_args[1], Mul)):
+                mul_args = sorted(Mul.make_args(add_args[1]), key=key)
+                if (len(mul_args) == 2
+                    and isinstance(mul_args[0], Number)
+                    and add_args[0].is_positive
+                    and mul_args[0].is_negative):
+                    return add_args
+
         key, reverse = self._parse_order(order)
         terms, gens = self.as_terms()
 
@@ -1034,13 +1051,6 @@ class Expr(Basic, EvalfMixin):
 
             ordered = sorted(_terms, key=key, reverse=True) \
                 + sorted(_order, key=key, reverse=True)
-
-        if (order == None
-            and self.is_Add
-            and len(ordered) == 2):
-            # For two-part adds with no explicit order and one negative term,
-            # favour putting the negative term second. list.sort() is stable.
-            ordered.sort(key=lambda t: t[0].extract_multiplicatively(-1) is not None)
 
         if data:
             return ordered, gens
