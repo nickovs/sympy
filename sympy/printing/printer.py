@@ -297,4 +297,16 @@ class Printer(object):
         if order == 'old':
             return sorted(Add.make_args(expr), key=cmp_to_key(Basic._compare_pretty))
         else:
-            return expr.as_ordered_terms(order=order)
+            result = expr.as_ordered_terms(order=order)
+
+            if (order == None
+                and expr.is_Add
+                and len(result) == 2):
+
+                # For two-part adds with no explicit order and one negative term,
+                # favour putting the negative term second. list.sort() is stable.
+                #print("Considering reorder: [{}, {}]".format(srepr(result[0]), srepr(result[1])))
+                result.sort(key=lambda t: t.extract_multiplicatively(-1) is not None)
+                #print("       order is now: [{}, {}]".format(srepr(result[0]), srepr(result[1])))
+
+            return result

@@ -1035,13 +1035,6 @@ class Expr(Basic, EvalfMixin):
             ordered = sorted(_terms, key=key, reverse=True) \
                 + sorted(_order, key=key, reverse=True)
 
-        if (order == None
-            and self.is_Add
-            and len(ordered) == 2):
-            # For two-part adds with no explicit order and one negative term,
-            # favour putting the negative term second. list.sort() is stable.
-            ordered.sort(key=lambda t: t[0].extract_multiplicatively(-1) is not None)
-
         if data:
             return ordered, gens
         else:
